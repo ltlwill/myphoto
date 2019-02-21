@@ -9,8 +9,9 @@
 	 */
 	function myPhoto(ele,opts)
 	{
+		var _opts = $.extend(true,{},this.options);
+		this.options = $.extend(true,_opts,opts);
 		this.$ele = ele;
-		this.options = $.extend(true,this.options,opts);
 		this._init();
 		return this;
 	};
@@ -21,9 +22,11 @@
 		urlAttrName: 'src',               // 获取图片url的属性
 		titleAttrName: 'name',            // 获取图片名称的属性
 		btns:[],                          // 按钮组，格式:[{id:'',iconCls:'','text':'',alt:'',hanlder:functioni(this,$img){}},{...}]
+		singleEleMode: true,              // 元素模式，单元素模式和多元素模式，单元素模式：共享一份页面元素,多元素模式：根据实例数量生成对应的元素，默认：单元素模式
 		onOpen: function(){},             // 当打开时回调
 		onNext: function(){},             // 下一张时回调
 		onPrevious: function(){},         // 上一张时回调 
+		keys: {'close': 27,'previous': [37,65],'next': [39,68]}, // 键盘配置，close: 关闭的键盘码，默认：27 即ESC键、previous: 上一张的键盘码，默认：37,65 即A键、<-键。 next: 下一张的键盘码，默认：39,68 即D键、->键
 	};
 	$pp.config =                          // 默认配置
 	{
@@ -34,7 +37,7 @@
 		titleCls: 'title',
 		contentCls: 'content',
 		toolbarCls: 'toolbar',
-		helpCls: 'help icon icon-info-sign icon-2x',
+		helpCls: 'help fa fa-info-circle fa-2x',
 		helpContentCls: 'help-content',
 		prevOrNextWidth: 50,
 		titleHeight: 30,
@@ -42,9 +45,10 @@
 		downloadAlt: '下载图片',
 		defaultContentCss:{'height':200,'width':200},
 		helpContent:'<p>帮助：</>' +
-			'<p class="info">1.退出：键盘左上角的ESC(退出)键、页面右上角的<i class="icon icon-remove"></i>按钮</p>' + 
-			'<p class="info">2.上一张：键盘的A键、<i class="icon icon-arrow-left"></i>(左方向)键、页面左侧的<i class="icon icon-chevron-left"></i>按钮</p>' + 
-			'<p class="info">3.下一张：键盘的D键、<i class="icon icon-arrow-right"></i>(右方向)键、页面右侧的<i class="icon icon-chevron-right"></i>按钮</p>' + 
+//			'<p class="info">1.退出：键盘左上角的ESC(退出)键、页面右上角的<i class="icon icon-remove"></i>按钮</p>' + 
+			'<p class="info">1.退出：键盘的C键、页面右上角的 X 按钮</p>' + 
+			'<p class="info">2.上一张：键盘的A键、 <-(左方向)键、页面左侧的   < 按钮</p>' + 
+			'<p class="info">3.下一张：键盘的D键、 ->(右方向)键、页面右侧的   > 按钮</p>' + 
 			'<p class="info">4.图片名称：页面的最顶部居中位置</p>' + 
 			'<p class="info">5.操作按钮：页面的最底部居中位置</p>',
 	};
@@ -81,7 +85,9 @@
 			this.$ele.data("created",true);
 		}	
 		this.imageIndex = 0;
+		this._instanceId_ = new Date().getTime() + '_' + parseInt((Math.random() * 10000)); 
 		this._create();
+		this.$ele.data('_instanceId_',this._instanceId_);
 		this.$ele.data("This",this);
 	};
 	/**
@@ -105,6 +111,11 @@
 				.append($title).append($content).append($toolbar)
 				.append($help).append($helpContent)
 				.appendTo($('body'));
+		if(this.options.singleEleMode){
+			$div.removeAttr('id');
+		}else{
+			$div.attr('id',this._instanceId_); // 增加ID属性
+		}	
 		// 按钮组
 		if(this.options.btns && this.options.btns.length)
 		{
@@ -149,13 +160,13 @@
 			}
 			evt = evt || window.event;
 			var code = evt.keyCode || evt.which;
-			if(code == '27')                                    // ESC键
+			if(me._isOperatingKeys(code,'close'))               // 关闭键
 			{
 				me.close();                                     // 关闭
-			}else if(code == '37' || code == '65')              // 左方向键或A字母键
+			}else if(me._isOperatingKeys(code,'previous'))               
 			{
 				me._goPrevious();                               // 上一张
-			}else if(code == '39' || code == '68')              // 右方向键 或D字母键   
+			}else if(me._isOperatingKeys(code,'next'))              
 			{
 				me._goNext();                                   // 下一张
 			}
@@ -165,9 +176,17 @@
 		});
 		
 	};
+	// 是否是操作键
+	$pp._isOperatingKeys = function(keyCode,type){
+		var keys = this.options.keys || {},
+			keyCodes = keys[type];
+		keyCodes = typeof keyCodes === 'object' && keyCodes.constructor === Array ? keyCodes : [keyCodes];
+		return $.inArray(keyCode,keyCodes) > -1;
+	},
 	$pp._check = function()
 	{
-		var $container = $('body').find('.' + this.config.containerCls);
+		var $container = this.options.singleEleMode ? $('body').find('.' + this.config.containerCls).not('[id]') 
+				: $('body').find('#' + this.$ele.data('_instanceId_'));
 		if($container && $container.length)
 		{
 			$container.remove();

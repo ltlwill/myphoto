@@ -234,13 +234,13 @@
 	$pp._showImage = function(index)
 	{
 		var me = this,
-			info = this._getShowImageInfo(index),
-			$img = this.$content.children('img');
+			info = me._getShowImageInfo(index),
+			$img = me.$content.children('img');
 		if(!$img.length)
 		{
 			$img = $('<img>'); 
-			this.$content.append($img);
-			this._calcFirstInitPosition();
+			me.$content.append($img);
+			me._calcFirstInitPosition();
 			$img.attr('src',info.url);
 		}else
 		{
@@ -252,10 +252,10 @@
             	me._calcPosition();
         	}
 		}
-		this.$title.html(info.title);
-		this.imageIndex = index;
-		this.$container.show();
-		this.isShow = true;
+		me.$title.html(info.title);
+		me.imageIndex = index;
+		me.$container.show();
+		me.isShow = true;
 		$(window).focus(); // 解决第一次打开后，鼠标不做任何点击直接按键，触发不了事件的问题
 //		this._calcPosition();
 	};
@@ -280,10 +280,11 @@
 	};
 	$pp._getShowImageInfo = function(index)
 	{
-		var $li = this.$ele.children('li').eq(index),
-			$img = $li.find(this.options.imgSelector);
-		return {url:$img.attr(this.options.urlAttrName),
-				title:$img.attr(this.options.titleAttrName)};
+		var me = this,
+			$li = me.$ele.children('li').eq(index),
+			$img = $li.find(me.options.imgSelector);
+		return {url: typeof me.options.urlAttrName === 'function' ? me.options.urlAttrName.call(me,index,me.$ele,me.$container) : $img.attr(me.options.urlAttrName),
+				title: typeof me.options.titleAttrName === 'function' ? me.options.titleAttrName.call(me,index,me.$ele,me.$container) : $img.attr(me.options.titleAttrName)};
 	};
 	$pp._calcPosition = function()
 	{

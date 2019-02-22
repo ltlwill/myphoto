@@ -153,28 +153,37 @@
 		$next.bind('click',function(){
 			me._goNext();
 		});
+		if(window.parent){
+			$(window.parent.document).bind('keyup',function(evt){
+				me._onDocumentKeyup(evt);
+			});
+		}
 		$(document).bind('keyup',function(evt){
-			if(!me.isShow)
-			{
-				return false;
-			}
-			evt = evt || window.event;
-			var code = evt.keyCode || evt.which;
-			if(me._isOperatingKeys(code,'close'))               // 关闭键
-			{
-				me.close();                                     // 关闭
-			}else if(me._isOperatingKeys(code,'previous'))               
-			{
-				me._goPrevious();                               // 上一张
-			}else if(me._isOperatingKeys(code,'next'))              
-			{
-				me._goNext();                                   // 下一张
-			}
+			me._onDocumentKeyup(evt);
 		});
 		$(window).resize(function(){
 			me._calcPosition();
 		});
 		
+	};
+	$pp._onDocumentKeyup  = function(evt){
+		var me = this;
+		if(!me.isShow)
+		{
+			return false;
+		}
+		evt = evt || window.event;
+		var code = evt.keyCode || evt.which;
+		if(me._isOperatingKeys(code,'close'))               // 关闭键
+		{
+			me.close();                                     // 关闭
+		}else if(me._isOperatingKeys(code,'previous'))               
+		{
+			me._goPrevious();                               // 上一张
+		}else if(me._isOperatingKeys(code,'next'))              
+		{
+			me._goNext();                                   // 下一张
+		}
 	};
 	// 是否是操作键
 	$pp._isOperatingKeys = function(keyCode,type){
@@ -247,6 +256,7 @@
 		this.imageIndex = index;
 		this.$container.show();
 		this.isShow = true;
+		$(window).focus(); // 解决第一次打开后，鼠标不做任何点击直接按键，触发不了事件的问题
 //		this._calcPosition();
 	};
 	/**
